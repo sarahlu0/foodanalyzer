@@ -6,7 +6,7 @@ import * as MediaLibrary from 'expo-media-library';
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
-  const [mediaPermission, setMediaPermission] = useState(false);  
+  const [mediaPermission, setMediaPermission] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
   const [isModalVisible, setModalVisible] = useState(false);
   const [foodData, setFoodData] = useState(null);
@@ -17,10 +17,13 @@ export default function App() {
   // Request media library permission on component mount
   const requestMediaPermission = async () => {
     const { status } = await MediaLibrary.requestPermissionsAsync();
-    if (status === 'granted') {
+    if (status === "granted") {
       setMediaPermission(true);
     } else {
-      Alert.alert('Permission Denied', 'Camera roll access is required to save images.');
+      Alert.alert(
+        "Permission Denied",
+        "Camera roll access is required to save images."
+      );
     }
   };
 
@@ -42,7 +45,6 @@ export default function App() {
     setModalVisible(true);
   };
 
-
   const hideFullSizeImage = () => {
     setModalVisible(false);
   };
@@ -59,38 +61,38 @@ export default function App() {
   }
   // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
-    const apiKey = '241ccb024c4bd194c2a9354ecc8ca5983580060c'; 
-    const apiUrl = 'https://api.logmeal.es/v2/image/recognition/dish';
-    
+    const apiKey = "LOG_MEAL_API_KEY"; // Replace with your LogMeal API key.
+    const apiUrl = "https://api.logmeal.es/v2/image/recognition/dish";
+
     try {
       setLoading(true);
-      
+
       const formData = new FormData();
-      formData.append('image', {
+      formData.append("image", {
         uri: photoUri,
-        type: 'image/jpeg',
-        name: 'photo.jpg',
+        type: "image/jpeg",
+        name: "photo.jpg",
       });
-  
+
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
+          Authorization: `Bearer ${apiKey}`,
         },
         body: formData,
       });
-  
+
       const responseText = await response.text();
-  
+
       if (!response.ok) {
-        console.error('API Error Response:', responseText);
+        console.error("API Error Response:", responseText);
         throw new Error(`API Error: ${response.status} ${response.statusText}`);
       }
-  
+
       const result = JSON.parse(responseText);
       console.log("Food Recognition Result:", result);
       setFoodData(result);
-      
+
       // Use recognition_results for dish info.
       if (result.recognition_results && result.recognition_results.length > 0) {
         const topDish = result.recognition_results[0];
@@ -106,17 +108,21 @@ export default function App() {
 
   // New function to fetch nutrition data from Calorie Ninja using fetch.
   const fetchCalorieNinjaNutrition = async (dishName) => {
-    const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(dishName)}`;
+    const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(
+      dishName
+    )}`;
     try {
       const response = await fetch(url, {
-        method: 'GET',
+        method: "GET",
         headers: {
-          'X-Api-Key': 'zYVo6GI/ssyG6DBDgdSp7w==4t4k0ltoJTTLSLsy', // Replace with your Calorie Ninja API key.
+          "X-Api-Key": "CALORIE_NINJA_KEY", // Replace with your Calorie Ninja API key.
         },
       });
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Calorie Ninja API Error: ${response.status} ${errorText}`);
+        throw new Error(
+          `Calorie Ninja API Error: ${response.status} ${errorText}`
+        );
       }
       const data = await response.json();
       console.log("Calorie Ninja Nutrition:", data);
@@ -131,7 +137,7 @@ export default function App() {
     if (cameraRef.current) {
       try {
         let photo = await cameraRef.current.takePictureAsync();
-        console.log('Photo taken:', photo);
+        console.log("Photo taken:", photo);
         setPhotoUri(photo.uri);
         // Reset previous data.
         setFoodData(null);
@@ -147,19 +153,20 @@ export default function App() {
   const saveToCameraRoll = async () => {
     if (photoUri && mediaPermission) {
       try {
-        const asset = await MediaLibrary.createAssetAsync(photoUri);  // Save image to gallery
-        await MediaLibrary.createAlbumAsync('MyApp Photos', asset, false);  // Save in album 'MyApp Photos'
-        Alert.alert('Saved!', 'Image has been saved to your camera roll!');
+        const asset = await MediaLibrary.createAssetAsync(photoUri); // Save image to gallery
+        await MediaLibrary.createAlbumAsync("MyApp Photos", asset, false); // Save in album 'MyApp Photos'
+        Alert.alert("Saved!", "Image has been saved to your camera roll!");
       } catch (error) {
-        console.error('Error saving image:', error);
-        Alert.alert('Error', 'Could not save the image to the camera roll.');
+        console.error("Error saving image:", error);
+        Alert.alert("Error", "Could not save the image to the camera roll.");
       }
     } else {
-      Alert.alert('Permission Denied', 'You need to grant camera roll access to save the image.');
+      Alert.alert(
+        "Permission Denied",
+        "You need to grant camera roll access to save the image."
+      );
     }
   };
-
-
 
   return (
     <View style={styles.container}>
@@ -181,37 +188,42 @@ export default function App() {
           </TouchableOpacity>
         </View>
       )}
-      
 
-    {/* Loading Indicator */}
-    {loading && <ActivityIndicator size="large" color="#0000ff" />}
+      {/* Loading Indicator */}
+      {loading && <ActivityIndicator size="large" color="#0000ff" />}
 
-    {/* Show Full-Size Image Modal */}
-    <Modal
-      visible={isModalVisible}
-      transparent={true}
-      animationType="fade"
-      onRequestClose={hideFullSizeImage}
-    >
-      <View style={styles.modalContainer}>
-        {/* Full-size Image */}
-        <TouchableOpacity style={styles.imageTouchable} onPress={hideFullSizeImage}>
-          <Image source={{ uri: photoUri }} style={styles.fullSizeImage} />
-        </TouchableOpacity>
-
-        {/* Floating Button */}
-        <View style={styles.floatingButtonContainer}>
-          <TouchableOpacity style={styles.button} onPress={saveToCameraRoll}>
-            <Text style={styles.buttonText}>Save to Camera Roll</Text>
+      {/* Show Full-Size Image Modal */}
+      <Modal
+        visible={isModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={hideFullSizeImage}
+      >
+        <View style={styles.modalContainer}>
+          {/* Full-size Image */}
+          <TouchableOpacity
+            style={styles.imageTouchable}
+            onPress={hideFullSizeImage}
+          >
+            <Image source={{ uri: photoUri }} style={styles.fullSizeImage} />
           </TouchableOpacity>
-        </View>
-      </View>
-    </Modal>
 
-    {/* Scrollable Food Recognition Results */}
-    {foodData && (
-      <ScrollView style={styles.foodDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
-        <Text style={styles.foodDataTitle}>Food Recognition Result:</Text>
+          {/* Floating Button */}
+          <View style={styles.floatingButtonContainer}>
+            <TouchableOpacity style={styles.button} onPress={saveToCameraRoll}>
+              <Text style={styles.buttonText}>Save to Camera Roll</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Scrollable Food Recognition Results */}
+      {foodData && (
+        <ScrollView
+          style={styles.foodDataContainer}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
+          <Text style={styles.foodDataTitle}>Food Recognition Result:</Text>
 
         {/* display recognized: lim top 3 */}
         {foodData.recognition_results && foodData.recognition_results.length > 0 && (
@@ -254,26 +266,26 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   camera: {
     flex: 2,
-    width: '100%',
+    width: "100%",
   },
   buttonContainer: {
     flex: 1,
-    backgroundColor: 'transparent',
-    flexDirection: 'row',
+    backgroundColor: "transparent",
+    flexDirection: "row",
     margin: 20,
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   button: {
-    backgroundColor: '#E6E6FA',
+    backgroundColor: "#E6E6FA",
     paddingVertical: 15,
     paddingHorizontal: 30,
     borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
 
   previewContainer: {
@@ -291,37 +303,36 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 
-
   modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
   },
-  
+
   imageTouchable: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: '100%',
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
   },
-  
+
   fullSizeImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'contain',
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
   },
-  
+
   floatingButtonContainer: {
-    position: 'absolute', // Ensures it floats over the image
+    position: "absolute", // Ensures it floats over the image
     bottom: 40, // Adjust for visibility
-    alignSelf: 'center', // Center button horizontally
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight transparency
+    alignSelf: "center", // Center button horizontally
+    backgroundColor: "rgba(255, 255, 255, 0.8)", // Slight transparency
     padding: 5,
     borderRadius: 10,
     elevation: 5,
   },
-  
+
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -333,7 +344,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Graphik Light',
     color: '#660066',
   },
-  
 
   foodDataContainer: {
     flex: 1,
@@ -361,25 +371,25 @@ const styles = StyleSheet.create({
     fontFamily: 'Graphik Light',
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#333',
+    color: "#333",
   },
   resultSection: {
     marginBottom: 10,
   },
   resultTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#555',
+    fontWeight: "600",
+    color: "#555",
     marginBottom: 5,
   },
   resultText: {
     fontSize: 14,
-    color: '#444',
+    color: "#444",
   },
   resultFooter: {
     fontSize: 12,
-    color: '#888',
+    color: "#888",
     marginTop: 10,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
 });
