@@ -1,17 +1,35 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Image, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
+import * as ImagePicker from 'expo-image-picker';
+import * as MediaLibrary from 'expo-media-library';  
 
 export default function App() {
   const [permission, requestPermission] = useCameraPermissions();
+  const [mediaPermission, setMediaPermission] = useState(false);  
   const [photoUri, setPhotoUri] = useState(null);
+  const [isModalVisible, setModalVisible] = useState(false);
   const [foodData, setFoodData] = useState(null);
   const [nutritionData, setNutritionData] = useState(null);
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
-  // If permission is not yet determined.
+  // Request media library permission on component mount
+  const requestMediaPermission = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
+    if (status === 'granted') {
+      setMediaPermission(true);
+    } else {
+      Alert.alert('Permission Denied', 'Camera roll access is required to save images.');
+    }
+  };
+
+  // Request media library permission once
+  useState(() => {
+    requestMediaPermission();
+  }, []);
+
   if (!permission) {
     return (
       <View style={styles.container}>
@@ -20,7 +38,16 @@ export default function App() {
     );
   }
 
-  // If permission is denied.
+  //display settings
+  const displayFull = () => {
+    setModalVisible(true);
+  };
+
+
+  const hideFullSizeImage = () => {
+    setModalVisible(false);
+  };
+
   if (!permission.granted) {
     return (
       <View style={styles.container}>
@@ -31,7 +58,6 @@ export default function App() {
       </View>
     );
   }
-
   // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
     const apiKey = 'KEYKEYKEY'; 
@@ -101,7 +127,7 @@ export default function App() {
     }
   };
 
-  // Function to take a picture.
+  //function to take pic
   const takePicture = async () => {
     if (cameraRef.current) {
       try {
@@ -118,6 +144,24 @@ export default function App() {
     }
   };
 
+  // function save pic
+  const saveToCameraRoll = async () => {
+    if (photoUri && mediaPermission) {
+      try {
+        const asset = await MediaLibrary.createAssetAsync(photoUri);  // Save image to gallery
+        await MediaLibrary.createAlbumAsync('MyApp Photos', asset, false);  // Save in album 'MyApp Photos'
+        Alert.alert('Saved!', 'Image has been saved to your camera roll!');
+      } catch (error) {
+        console.error('Error saving image:', error);
+        Alert.alert('Error', 'Could not save the image to the camera roll.');
+      }
+    } else {
+      Alert.alert('Permission Denied', 'You need to grant camera roll access to save the image.');
+    }
+  };
+
+
+
   return (
     <View style={styles.container}>
       {/* Camera View */}
@@ -129,58 +173,84 @@ export default function App() {
         </View>
       </CameraView>
 
-      {/* Photo Preview */}
+      {/* show preview */}
       {photoUri && (
         <View style={styles.previewContainer}>
           <Text>Photo Preview:</Text>
-          <Image source={{ uri: photoUri }} style={styles.previewImage} />
+          <TouchableOpacity style={{ width: '100%', height: '100%' }} onPress={displayFull}>
+            <Image source={{ uri: photoUri }} style={styles.previewImage} />
+          </TouchableOpacity>
         </View>
       )}
+      
 
-      {/* Loading Indicator */}
-      {loading && <ActivityIndicator size="large" color="#0000ff" />}
+    {/* Loading Indicator */}
+    {loading && <ActivityIndicator size="large" color="#0000ff" />}
 
-      {/* Scrollable Food Recognition Results */}
-      {foodData && (
-        <ScrollView style={styles.foodDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
-          <Text style={styles.foodDataTitle}>Food Recognition Result:</Text>
-          
-          {/* Display recognized dishes from recognition_results */}
-          {foodData.recognition_results && foodData.recognition_results.length > 0 && (
-            <View style={styles.resultSection}>
-              <Text style={styles.resultTitle}>Dishes:</Text>
-              {foodData.recognition_results.map((dish, index) => (
-                <Text key={index} style={styles.resultText}>
-                  {dish.name} (Confidence: {(dish.prob * 100).toFixed(2)}%)
-                </Text>
-              ))}
-            </View>
-          )}
+    {/* Show Full-Size Image Modal */}
+    <Modal
+      visible={isModalVisible}
+      transparent={true}
+      animationType="fade"
+      onRequestClose={hideFullSizeImage}
+    >
+      <View style={styles.modalContainer}>
+        {/* Full-size Image */}
+        <TouchableOpacity style={styles.imageTouchable} onPress={hideFullSizeImage}>
+          <Image source={{ uri: photoUri }} style={styles.fullSizeImage} />
+        </TouchableOpacity>
 
-          {foodData.imageId && (
-            <Text style={styles.resultFooter}>Image ID: {foodData.imageId}</Text>
-          )}
-        </ScrollView>
-      )}
+        {/* Floating Button */}
+        <View style={styles.floatingButtonContainer}>
+          <TouchableOpacity style={styles.button} onPress={saveToCameraRoll}>
+            <Text style={styles.buttonText}>Save to Camera Roll</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
 
-      {/* Scrollable Nutritional Information */}
-      {nutritionData && (
-        <ScrollView style={styles.nutritionDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
-          <Text style={styles.foodDataTitle}>Nutritional Information:</Text>
-          {nutritionData.items && nutritionData.items.map((item, index) => (
+    {/* Scrollable Food Recognition Results */}
+    {foodData && (
+      <ScrollView style={styles.foodDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
+        <Text style={styles.foodDataTitle}>Food Recognition Result:</Text>
+
+        {/* Display recognized dishes */}
+        {foodData.recognition_results && foodData.recognition_results.length > 0 && (
+          <View style={styles.resultSection}>
+            <Text style={styles.resultTitle}>Dishes:</Text>
+            {foodData.recognition_results.map((dish, index) => (
               <Text key={index} style={styles.resultText}>
-                {item.name}: {item.calories} calories, {item.protein}g protein, {item.fat}g fat, {item.carbohydrates}g carbs
+                {dish.name} (Confidence: {(dish.prob * 100).toFixed(2)}%)
               </Text>
-          ))}
-        </ScrollView>
-      )}
+            ))}
+          </View>
+        )}
+
+        {foodData.imageId && (
+          <Text style={styles.resultFooter}>Image ID: {foodData.imageId}</Text>
+        )}
+      </ScrollView>
+    )}
+
+    {/* Scrollable Nutritional Information */}
+    {nutritionData && (
+      <ScrollView style={styles.nutritionDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
+        <Text style={styles.foodDataTitle}>Nutritional Information:</Text>
+        {nutritionData.items && nutritionData.items.map((item, index) => (
+          <Text key={index} style={styles.resultText}>
+            {item.name}: {item.calories} calories, {item.protein}g protein, {item.fat}g fat, {item.carbohydrates}g carbs
+          </Text>
+        ))}
+      </ScrollView>
+    )}
+
 
       <StatusBar style="auto" />
     </View>
   );
 }
 
-// Basic styles for the app.
+// Basic styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -198,12 +268,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   button: {
-    flex: 0.3,
-    alignSelf: 'flex-end',
-    backgroundColor: '#fff',
+    backgroundColor: '#E6E6FA',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
     borderRadius: 5,
-    padding: 15,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
     fontSize: 18,
@@ -219,6 +289,45 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'contain',
   },
+
+
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  
+  imageTouchable: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+  },
+  
+  fullSizeImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  
+  floatingButtonContainer: {
+    position: 'absolute', // Ensures it floats over the image
+    bottom: 40, // Adjust for visibility
+    alignSelf: 'center', // Center button horizontally
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight transparency
+    padding: 5,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  
+  buttonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  
+
   foodDataContainer: {
     flex: 1,
     margin: 10,
