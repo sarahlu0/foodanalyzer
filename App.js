@@ -61,7 +61,7 @@ export default function App() {
   }
   // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
-    const apiKey = "LOG_MEAL_API_KEY"; // Replace with your LogMeal API key.
+    const apiKey = "b328fe5e8ca889f4f09faeaf596ec4422ec5e6bd"; // Replace with your LogMeal API key.
     const apiUrl = "https://api.logmeal.es/v2/image/recognition/dish";
 
     try {
