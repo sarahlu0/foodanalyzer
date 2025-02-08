@@ -32,9 +32,9 @@ export default function App() {
     );
   }
 
-  // Updated recognizeFood function that uses recognition_results.
+  // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
-    const apiKey = 'KEYHEREKEYHERE'; 
+    const apiKey = 'KEYKEYKEY'; 
     const apiUrl = 'https://api.logmeal.es/v2/image/recognition/dish';
     
     try {
@@ -69,7 +69,8 @@ export default function App() {
       // Use recognition_results for dish info.
       if (result.recognition_results && result.recognition_results.length > 0) {
         const topDish = result.recognition_results[0];
-        // fetchNutritionData(topDish.name); 
+        // Call Calorie Ninja API using the top dish name.
+        fetchCalorieNinjaNutrition(topDish.name);
       }
     } catch (error) {
       console.error("Error recognizing food:", error);
@@ -78,31 +79,25 @@ export default function App() {
     }
   };
 
-  // New function to fetch nutritional data based on the dish name.
-  const fetchNutritionData = async (dishName) => {
-    const nutritionApiKey = '4ac082646a6aeff7636d6a82570f8e3af2f4db97'; // Replace with your nutritional API key.
-    // Replace the endpoint below with the correct nutritional API endpoint.
-    const nutritionUrl = `https://api.logmeal.es/v2/nutrition/lookup?dish=${encodeURIComponent(dishName)}`;
-    
+  // New function to fetch nutrition data from Calorie Ninja using fetch.
+  const fetchCalorieNinjaNutrition = async (dishName) => {
+    const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(dishName)}`;
     try {
-      const response = await fetch(nutritionUrl, {
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${nutritionApiKey}`,
-          'Content-Type': 'application/json'
+          'X-Api-Key': 'KEYKEYKEY', // Replace with your Calorie Ninja API key.
         },
       });
-
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Nutrition API Error: ${response.status} ${errorText}`);
+        throw new Error(`Calorie Ninja API Error: ${response.status} ${errorText}`);
       }
-      
-      const nutritionResult = await response.json();
-      console.log("Nutrition Info:", nutritionResult);
-      setNutritionData(nutritionResult);
+      const data = await response.json();
+      console.log("Calorie Ninja Nutrition:", data);
+      setNutritionData(data);
     } catch (error) {
-      console.error("Error fetching nutrition data:", error);
+      console.error("Error fetching nutrition data from Calorie Ninja:", error);
     }
   };
 
@@ -167,7 +162,18 @@ export default function App() {
           )}
         </ScrollView>
       )}
- 
+
+      {/* Scrollable Nutritional Information */}
+      {nutritionData && (
+        <ScrollView style={styles.nutritionDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
+          <Text style={styles.foodDataTitle}>Nutritional Information:</Text>
+          {nutritionData.items && nutritionData.items.map((item, index) => (
+              <Text key={index} style={styles.resultText}>
+                {item.name}: {item.calories} calories, {item.protein}g protein, {item.fat}g fat, {item.carbohydrates}g carbs
+              </Text>
+          ))}
+        </ScrollView>
+      )}
 
       <StatusBar style="auto" />
     </View>
