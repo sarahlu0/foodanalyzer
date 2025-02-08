@@ -60,7 +60,7 @@ export default function App() {
   }
   // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
-    const apiKey = 'KEYKEYKEY'; 
+    const apiKey = '241ccb024c4bd194c2a9354ecc8ca5983580060c'; 
     const apiUrl = 'https://api.logmeal.es/v2/image/recognition/dish';
     
     try {
@@ -112,7 +112,7 @@ export default function App() {
       const response = await fetch(url, {
         method: 'GET',
         headers: {
-          'X-Api-Key': 'KEYKEYKEY', // Replace with your Calorie Ninja API key.
+          'X-Api-Key': 'zYVo6GI/ssyG6DBDgdSp7w==4t4k0ltoJTTLSLsy', // Replace with your Calorie Ninja API key.
         },
       });
       if (!response.ok) {
