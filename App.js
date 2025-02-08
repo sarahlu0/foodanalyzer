@@ -2,7 +2,6 @@ import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
-import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';  
 
 export default function App() {
@@ -176,7 +175,7 @@ export default function App() {
       {/* show preview */}
       {photoUri && (
         <View style={styles.previewContainer}>
-          <Text>Photo Preview:</Text>
+          <Text style ={styles.infoText}>Photo Preview:</Text>
           <TouchableOpacity style={{ width: '100%', height: '100%' }} onPress={displayFull}>
             <Image source={{ uri: photoUri }} style={styles.previewImage} />
           </TouchableOpacity>
@@ -214,17 +213,18 @@ export default function App() {
       <ScrollView style={styles.foodDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
         <Text style={styles.foodDataTitle}>Food Recognition Result:</Text>
 
-        {/* Display recognized dishes */}
+        {/* display recognized: lim top 3 */}
         {foodData.recognition_results && foodData.recognition_results.length > 0 && (
           <View style={styles.resultSection}>
-            <Text style={styles.resultTitle}>Dishes:</Text>
-            {foodData.recognition_results.map((dish, index) => (
+            <Text style={styles.resultTitle}>Top 3 Dishes:</Text>
+            {foodData.recognition_results.slice(0, 3).map((dish, index) => (
               <Text key={index} style={styles.resultText}>
-                {dish.name} (Confidence: {(dish.prob * 100).toFixed(2)}%)
+                {dish.name} (Confidence: {(dish.prob * 100).toFixed(1)}%)
               </Text>
             ))}
           </View>
         )}
+
 
         {foodData.imageId && (
           <Text style={styles.resultFooter}>Image ID: {foodData.imageId}</Text>
@@ -275,19 +275,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: {
-    fontSize: 18,
-    color: '#000',
-  },
+
   previewContainer: {
     flex: 1,
     alignItems: 'center',
+    borderRadius: 20,
     padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight transparency
+    borderRadius: 10
   },
   previewImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
+    padding: 10,
   },
 
 
@@ -324,16 +325,22 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#660066',
+  },
+
+  infoText: {
+    fontSize: 16,
+    fontFamily: 'Graphik Light',
+    color: '#660066',
   },
   
 
   foodDataContainer: {
     flex: 1,
     margin: 10,
-    padding: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
+    padding: 20,
+    backgroundColor: '#E6E6FA',
+    borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -345,11 +352,13 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
     padding: 15,
-    backgroundColor: '#e9f9e9',
+    backgroundColor: '#E6E6FA',
     borderRadius: 10,
+    borderColor: '#660066',
   },
   foodDataTitle: {
     fontSize: 20,
+    fontFamily: 'Graphik Light',
     fontWeight: 'bold',
     marginBottom: 10,
     color: '#333',
