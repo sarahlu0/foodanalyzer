@@ -1,67 +1,67 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { CameraView, useCameraPermissions } from 'expo-camera';
+import { CameraView, useCameraPerms } from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
 import * as MediaLibrary from 'expo-media-library';  
 
 export default function App() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [mediaPermission, setMediaPermission] = useState(false);
+  const [perm, requestPerm] = useCameraPerms();
+  const [mediaPerm, setMediaPerm] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
-  const [isModalVisible, setModalVisible] = useState(false);
+  const [isModalVis, setModalVis] = useState(false);
   const [foodData, setFoodData] = useState(null);
   const [nutritionData, setNutritionData] = useState(null);
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
-  // Request media library permission on component mount
-  const requestMediaPermission = async () => {
-    const { status } = await MediaLibrary.requestPermissionsAsync();
+  // Request media library perm on component mount
+  const requestMediaPerm = async () => {
+    const { status } = await MediaLibrary.requestPermsAsync();
     if (status === "granted") {
-      setMediaPermission(true);
+      setMediaPerm(true);
     } else {
       Alert.alert(
         "Permission Denied",
-        "Camera roll access is required to save images."
+        "Please provide camera roll access to save images."
       );
     }
   };
 
-  // Request media library permission once
+  // Request media library perm once
   useState(() => {
-    requestMediaPermission();
+    requestMediaPerm();
   }, []);
 
-  if (!permission) {
+  if (!perm) {
     return (
       <View style={styles.container}>
-        <Text>Requesting camera permissions...</Text>
+        <Text>Requesting camera perms...</Text>
       </View>
     );
   }
 
   //display settings
   const displayFull = () => {
-    setModalVisible(true);
+    setModalVis(true);
   };
 
-  const hideFullSizeImage = () => {
-    setModalVisible(false);
+  const hideFullImage = () => {
+    setModalVis(false);
   };
 
-  if (!permission.granted) {
+  if (!perm.granted) {
     return (
       <View style={styles.container}>
         <Text>No access to camera</Text>
-        <TouchableOpacity onPress={requestPermission} style={styles.button}>
-          <Text style={styles.buttonText}>Grant Permission</Text>
+        <TouchableOpacity onPress={requestPerm} style={styles.button}>
+          <Text style={styles.buttonText}>Grant Perm</Text>
         </TouchableOpacity>
       </View>
     );
   }
   // Function to recognize food using LogMeal API.
   const recognizeFood = async (photoUri) => {
-    const apiKey = "INSERT_LOGMEAL_API_KEY"; // Replace with your LogMeal API key.
+    const apiKey = ""; // Replace with your LogMeal API key.
     const apiUrl = "https://api.logmeal.es/v2/image/recognition/dish";
 
     try {
@@ -69,7 +69,7 @@ export default function App() {
 
       const formData = new FormData();
       formData.append("image", {
-        uri: photoUri,
+        uri: photoUri,  
         type: "image/jpeg",
         name: "photo.jpg",
       });
@@ -115,7 +115,7 @@ export default function App() {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          "X-Api-Key": "INSERT_CAL_NINGJA_API_KEY", // Replace with your Calorie Ninja API key.
+          "X-Api-Key": "", // Replace with your Calorie Ninja API key.
         },
       });
       if (!response.ok) {
@@ -139,7 +139,7 @@ export default function App() {
         let photo = await cameraRef.current.takePictureAsync();
         console.log("Photo taken:", photo);
         setPhotoUri(photo.uri);
-        // Reset previous data.
+        // Reset previous data
         setFoodData(null);
         setNutritionData(null);
         recognizeFood(photo.uri);
@@ -151,18 +151,17 @@ export default function App() {
 
   // function save pic
   const saveToCameraRoll = async () => {
-    if (photoUri && mediaPermission) {
+    if (photoUri && mediaPerm) {
       try {
         const asset = await MediaLibrary.createAssetAsync(photoUri); // Save image to gallery
-        await MediaLibrary.createAlbumAsync("MyApp Photos", asset, false); // Save in album 'MyApp Photos'
-        Alert.alert("Saved!", "Image has been saved to your camera roll!");
+        Alert.alert("Saved!", "Image has been saved to your camera roll :)");
       } catch (error) {
         console.error("Error saving image:", error);
         Alert.alert("Error", "Could not save the image to the camera roll.");
       }
     } else {
       Alert.alert(
-        "Permission Denied",
+        "Perm Denied",
         "You need to grant camera roll access to save the image."
       );
     }
@@ -170,8 +169,8 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      {/* Camera View */}
-      <CameraView style={styles.camera} ref={cameraRef} enableTorch={false}>
+      {/* camera View */}
+      <CameraView style={styles.camera} ref={cameraRef}>
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={takePicture}>
             <Text style={styles.buttonText}>Take Photo</Text>
@@ -194,18 +193,18 @@ export default function App() {
 
       {/* Show Full-Size Image Modal */}
       <Modal
-        visible={isModalVisible}
+        visible={isModalVis}
         transparent={true}
         animationType="fade"
-        onRequestClose={hideFullSizeImage}
+        onRequestClose={hideFullImage}
       >
         <View style={styles.modalContainer}>
           {/* Full-size Image */}
           <TouchableOpacity
             style={styles.imageTouchable}
-            onPress={hideFullSizeImage}
+            onPress={hideFullImage}
           >
-            <Image source={{ uri: photoUri }} style={styles.fullSizeImage} />
+            <Image source={{ uri: photoUri }} style={styles.fullImage} />
           </TouchableOpacity>
 
           {/* Floating Button */}
@@ -217,7 +216,7 @@ export default function App() {
         </View>
       </Modal>
 
-      {/* Scrollable Food Recognition Results */}
+      {/* scrollable food results */}
       {foodData && (
         <ScrollView
           style={styles.foodDataContainer}
@@ -262,7 +261,7 @@ export default function App() {
   );
 }
 
-// Basic styles
+// styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -317,17 +316,17 @@ const styles = StyleSheet.create({
     width: "100%",
   },
 
-  fullSizeImage: {
+  fullImage: {
     width: "100%",
     height: "100%",
     resizeMode: "contain",
   },
 
   floatingButtonContainer: {
-    position: "absolute", // Ensures it floats over the image
-    bottom: 40, // Adjust for visibility
-    alignSelf: "center", // Center button horizontally
-    backgroundColor: "rgba(255, 255, 255, 0.8)", // Slight transparency
+    position: "absolute", // fix container location
+    bottom: 40, 
+    alignSelf: "center", 
+    backgroundColor: "rgba(255, 255, 255, 0.8)", 
     padding: 5,
     borderRadius: 10,
     elevation: 5,
