@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Modal, Image, Alert, ActivityIndicator, ScrollView } from 'react-native';
-import { CameraView, useCameraPerms } from 'expo-camera';
+import { CameraView, useCameraPermissions} from 'expo-camera';
 import { StatusBar } from 'expo-status-bar';
 import * as MediaLibrary from 'expo-media-library';  
 
 export default function App() {
-  const [perm, requestPerm] = useCameraPerms();
-  const [mediaPerm, setMediaPerm] = useState(false);
+  const [permissions, requestPermissions] = useCameraPermissions();
+  const [mediaPermissions, setMediaPermissions] = useState(false);
   const [photoUri, setPhotoUri] = useState(null);
   const [isModalVis, setModalVis] = useState(false);
   const [foodData, setFoodData] = useState(null);
@@ -14,28 +14,28 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const cameraRef = useRef(null);
 
-  // Request media library perm on component mount
-  const requestMediaPerm = async () => {
-    const { status } = await MediaLibrary.requestPermsAsync();
+  // Request camera roll access
+  const requestMediaPermissions = async () => {
+    const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status === "granted") {
-      setMediaPerm(true);
+      setMediaPermissions(true);
     } else {
       Alert.alert(
-        "Permission Denied",
+        "Permissionsission Denied",
         "Please provide camera roll access to save images."
       );
     }
   };
 
-  // Request media library perm once
+  // Request media library permissions once
   useState(() => {
-    requestMediaPerm();
+    requestMediaPermissions();
   }, []);
 
-  if (!perm) {
+  if (!permissions) {
     return (
       <View style={styles.container}>
-        <Text>Requesting camera perms...</Text>
+        <Text>Requesting camera permissionss...</Text>
       </View>
     );
   }
@@ -49,19 +49,19 @@ export default function App() {
     setModalVis(false);
   };
 
-  if (!perm.granted) {
+  if (!permissions.granted) {
     return (
       <View style={styles.container}>
         <Text>No access to camera</Text>
-        <TouchableOpacity onPress={requestPerm} style={styles.button}>
-          <Text style={styles.buttonText}>Grant Perm</Text>
+        <TouchableOpacity onPress={requestPermissions} style={styles.button}>
+          <Text style={styles.buttonText}>Grant Permissions</Text>
         </TouchableOpacity>
       </View>
     );
   }
-  // Function to recognize food using LogMeal API.
+  // Function to recognize food using LogMeal API
   const recognizeFood = async (photoUri) => {
-    const apiKey = ""; // Replace with your LogMeal API key.
+    const apiKey = ""; // LogMeal API Key here
     const apiUrl = "https://api.logmeal.es/v2/image/recognition/dish";
 
     try {
@@ -106,7 +106,7 @@ export default function App() {
     }
   };
 
-  // New function to fetch nutrition data from Calorie Ninja using fetch.
+  // fetch nutrition info
   const fetchCalorieNinjaNutrition = async (dishName) => {
     const url = `https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(
       dishName
@@ -115,7 +115,7 @@ export default function App() {
       const response = await fetch(url, {
         method: "GET",
         headers: {
-          "X-Api-Key": "", // Replace with your Calorie Ninja API key.
+          "X-Api-Key": "", // Insert Calorie Ninja API key here
         },
       });
       if (!response.ok) {
@@ -151,7 +151,7 @@ export default function App() {
 
   // function save pic
   const saveToCameraRoll = async () => {
-    if (photoUri && mediaPerm) {
+    if (photoUri && mediaPermissions) {
       try {
         const asset = await MediaLibrary.createAssetAsync(photoUri); // Save image to gallery
         Alert.alert("Saved!", "Image has been saved to your camera roll :)");
@@ -161,7 +161,7 @@ export default function App() {
       }
     } else {
       Alert.alert(
-        "Perm Denied",
+        "Permissions Denied",
         "You need to grant camera roll access to save the image."
       );
     }
@@ -191,7 +191,7 @@ export default function App() {
       {/* Loading Indicator */}
       {loading && <ActivityIndicator size="large" color="#0000ff" />}
 
-      {/* Show Full-Size Image Modal */}
+      {/* full size container */}
       <Modal
         visible={isModalVis}
         transparent={true}
@@ -199,7 +199,6 @@ export default function App() {
         onRequestClose={hideFullImage}
       >
         <View style={styles.modalContainer}>
-          {/* Full-size Image */}
           <TouchableOpacity
             style={styles.imageTouchable}
             onPress={hideFullImage}
@@ -243,7 +242,7 @@ export default function App() {
       </ScrollView>
     )}
 
-    {/* Scrollable Nutritional Information */}
+    {/* nutrition info container  */}
     {nutritionData && (
       <ScrollView style={styles.nutritionDataContainer} contentContainerStyle={{ paddingBottom: 20 }}>
         <Text style={styles.foodDataTitle}>Nutritional Information:</Text>
@@ -292,8 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 20,
     padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight transparency
-    borderRadius: 10
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
   },
   previewImage: {
     width: '100%',
@@ -323,7 +321,7 @@ const styles = StyleSheet.create({
   },
 
   floatingButtonContainer: {
-    position: "absolute", // fix container location
+    position: "absolute", 
     bottom: 40, 
     alignSelf: "center", 
     backgroundColor: "rgba(255, 255, 255, 0.8)", 
